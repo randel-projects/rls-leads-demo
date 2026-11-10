@@ -58,6 +58,23 @@ npm install
 npm run dev
 ```
 
+## Tests
+
+Four tiers, all runnable without a single private secret — the anon key is public by design and the two demo accounts are published above.
+
+| Tier | Command | What it proves |
+| --- | --- | --- |
+| Unit | `npm run test:unit` | Pure logic: the friendly-error mapping (every branch) and the time-ago clock boundaries. |
+| Component | `npm run test:component` | The app's own code — rendering, forms, flows, the two-click delete — with `leadsRepository` mocked. Deliberately says nothing about the database. |
+| Security | `npm run test:security` | **The real RLS matrix, automated**: two signed-in users plus an anon client against the live project. Isolation both directions, ownership defaulting to the JWT uid, tampered `owner_id` rejected (42501), cross-user delete a silent no-op. |
+| E2E | `npm run test:e2e` | The 60-second walkthrough above as a Playwright test: two browser contexts (isolated storage), blind both ways, two-click deletes. |
+
+- Live tiers (security, E2E) need the Supabase project awake — see Known limitations.
+- E2E tests the **last `vercel --prod` deployment**, not the working tree; redeploy after UI changes before running it.
+- `npm test` stays offline (unit + component); the live tiers are always explicit.
+- `npm run typecheck` checks `src` + `tests` together (`tsconfig.test.json`) — the production build never sees test code.
+- CI (`.github/workflows/tests.yml`) runs all four tiers on push/PR, plus a weekly cron that doubles as best-effort keep-warm for the project.
+
 ## Deployment
 
 Hosted on **Vercel** (project `randel1/demo-website`) at https://demo-website-randel1.vercel.app.
@@ -75,7 +92,7 @@ Hosted on **Vercel** (project `randel1/demo-website`) at https://demo-website-ra
 
 - Create + delete only — no editing, teams, roles, or admin view. Scope lives in `SPEC.md`.
 - No realtime sync between the two browser windows; refresh to re-query.
-- Supabase free tier pauses projects after ~1 week of inactivity — if the live link looks dead, that's why, and the project wakes with one click in the dashboard.
+- Supabase free tier pauses projects after ~1 week of inactivity — if the live link looks dead, that's why, and the project wakes with one click in the dashboard. A weekly GitHub Actions cron pings the project as best-effort keep-warm.
 
 ---
 

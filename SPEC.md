@@ -73,9 +73,9 @@ Plus one SQL-editor check (the part a technical interviewer respects):
 - [ ] Live Vercel URL loads warm in <3s (Hobby tier default `*.vercel.app` is fine)
 - [ ] `<title>` set; explainer line visible
 - [ ] Sign up + sign in + sign out work for both test users
-- [ ] **RLS matrix verified by hand:** A sees only A's, B sees only B's, delete only touches own rows
-- [ ] SQL check: `anon` sees 0 rows
-- [ ] `with check` proven: insert always lands with the signed-in user as owner (B cannot insert a row owned by A — even by tampering the payload)
+- [ ] **RLS matrix verified by hand:** A sees only A's, B sees only B's, delete only touches own rows *(now automated: `tests/security/rls.test.ts`)*
+- [ ] SQL check: `anon` sees 0 rows *(automated in the same suite)*
+- [ ] `with check` proven: insert always lands with the signed-in user as owner (B cannot insert a row owned by A — even by tampering the payload) *(automated: tampered-owner insert test, pinned to code 42501)*
 - [ ] README: what it proves, the policy SQL, the 60-second walkthrough, stack, "email confirmation off for demo"
 - [ ] Deployed **early** (step 2 of build order) — the URL exists before the features do
 
@@ -90,4 +90,4 @@ Plus one SQL-editor check (the part a technical interviewer respects):
 
 ## Out of scope (the list that keeps this at one day)
 
-No editing (create + delete only) · no teams/roles/invites/admin view · no Tailwind (hand-rolled design system instead) · no pagination, search, or sorting · no extra tables or columns (status field included) · no email confirmation flows · no custom domain · no CI · no Supabase codegen types · no unit-test framework — **the RLS matrix and SQL checks ARE the test suite for this artifact, and they're run by hand, personally.** *(Owner decision 2026-09-27: polish level upgraded from "clean-and-readable" to "beautiful and presentable" — the target JD explicitly scores front-end design sense. Presentation only; the feature scope above does not move.)*
+No editing (create + delete only) · no teams/roles/invites/admin view · no Tailwind (hand-rolled design system instead) · no pagination, search, or sorting · no extra tables or columns (status field included) · no email confirmation flows · no custom domain · no Supabase codegen types · *(Owner decision 2026-11-10: tests and CI added after the one-day build — unit + component tiers, a live-API security suite that automates the RLS matrix below, Playwright E2E, and GitHub Actions. Data access was consolidated into `src/lib/leadsRepository.ts` as the single seam those tests mock — still no interface, no DI. Before this change, the RLS matrix and SQL checks WERE the test suite for this artifact, run by hand, personally.)* *(Owner decision 2026-09-27: polish level upgraded from "clean-and-readable" to "beautiful and presentable" — the target JD explicitly scores front-end design sense. Presentation only; the feature scope above does not move.)*

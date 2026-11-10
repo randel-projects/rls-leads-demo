@@ -1,0 +1,66 @@
+name: tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    # Weekly run doubles as best-effort keep-warm for the Supabase free tier,
+    # which pauses projects after ~1 week of inactivity. GitHub disables
+    # scheduled workflows after 60 days without repo activity — long-idle
+    # repos need one push to re-arm it.
+    - cron: '0 9 * * 1'
+
+jobs:
+  unit-component:
+    name: unit + component (offline)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+
+  security:
+    name: live RLS matrix
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      # Public by design — the exact values shipped in the client bundle
+      # (see README, "The entire security model"). RLS is the protection,
+      # not secrecy. Never put the service-role key or a Vercel token here.
+      SUPABASE_URL: https://asldlkwdmomavkwfvpxu.supabase.co
+      SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFzbGRsa3dkbW9tYXZrd2Z2cHh1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA1MDYwMTIsImV4cCI6MjEwNjA4MjAxMn0.VsFJLQPLk1BJ5mWAbySAL0I-3K3YE_jVI4Uiz4BMY7Y
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run test:security
+
+  e2e:
+    name: e2e walkthrough (live deployment)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e
+      - if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7
