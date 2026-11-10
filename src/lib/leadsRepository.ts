@@ -29,5 +29,6 @@ export async function addLead(name: string, note: string | null) {
 }
 
 export async function deleteLead(id: string) {
-  return supabase!.from('leads').delete().eq('id', id)
+  const { data, error } = await supabase!.from('leads').delete().eq('id', id)
+  return { data: (data ?? null) as Lead | null, error }
 }
