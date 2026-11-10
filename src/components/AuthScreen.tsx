@@ -178,7 +178,7 @@ export default function AuthScreen() {
   )
 }
 
-function friendlyError(err: unknown): string {
+export function friendlyError(err: unknown): string {
   const msg = err instanceof Error ? err.message : String(err)
   if (msg.includes('Invalid login credentials'))
     return 'Wrong email or password.'

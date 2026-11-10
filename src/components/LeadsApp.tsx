@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
 import type { Session } from '@supabase/supabase-js'
 import { supabase } from '../lib/supabase'
+import { listLeads, addLead as insertLead, deleteLead } from '../lib/leadsRepository'
 import type { Lead } from '../lib/types'
 
 export default function LeadsApp({ session }: { session: Session }) {
@@ -24,15 +25,9 @@ export default function LeadsApp({ session }: { session: Session }) {
 
   async function load() {
     setError(null)
-    const { data, error } = await supabase!
-      .from('leads')
-      .select('*')
-      .order('created_at', { ascending: false })
-    // NOTE: deliberately NO client-side filtering here. What this list shows
-    // is exactly what Postgres returns for the signed-in user — the RLS
-    // policy is the only thing deciding visibility. That is the demo.
+    const { data, error } = await listLeads()
     if (error) setError(error.message)
-    else setLeads((data ?? []) as Lead[])
+    else setLeads(data)
     setLoading(false)
   }
 
@@ -42,18 +37,11 @@ export default function LeadsApp({ session }: { session: Session }) {
     if (!trimmed) return
     setAdding(true)
     setError(null)
-    const { data, error } = await supabase!
-      .from('leads')
-      // owner_id is not sent — the database defaults it to auth.uid() and the
-      // policy's WITH CHECK enforces it. The client cannot insert for
-      // someone else.
-      .insert({ name: trimmed, note: note.trim() || null })
-      .select()
-      .single()
+    const { data, error } = await insertLead(trimmed, note.trim() || null)
     if (error) {
       setError(error.message)
     } else if (data) {
-      setLeads((prev) => [data as Lead, ...prev])
+      setLeads((prev) => [data, ...prev])
       setName('')
       setNote('')
     }
@@ -73,7 +61,7 @@ export default function LeadsApp({ session }: { session: Session }) {
   async function doDelete(id: string) {
     setConfirmId(null)
     setError(null)
-    const { error } = await supabase!.from('leads').delete().eq('id', id)
+    const { error } = await deleteLead(id)
     // RLS makes deleting another user's row a silent no-op — but it can't be
     // in our list anyway, because RLS never showed it to us.
     if (error) setError(error.message)
@@ -210,7 +198,7 @@ function SkeletonRow() {
   )
 }
 
-function timeAgo(iso: string): string {
+export function timeAgo(iso: string): string {
   const s = Math.floor((Date.now() - new Date(iso).getTime()) / 1000)
   if (s < 45) return 'just now'
   const m = Math.floor(s / 60)
