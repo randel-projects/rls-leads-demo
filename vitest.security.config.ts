@@ -1,5 +1,6 @@
 import { defineConfig } from 'vitest/config'
 import { loadEnv } from 'vite'
+import './tests/node20-shims'
 
 // Live-API tier: runs against the real Supabase project. Env plumbing keeps the
 // same test file working locally (reads .env.local's VITE_* values) and in CI
