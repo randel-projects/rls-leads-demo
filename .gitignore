@@ -17,3 +17,6 @@ npm-debug.log*
 !.vscode/extensions.json
 .vercel
 .env*
+
+playwright-report/
+test-results/
